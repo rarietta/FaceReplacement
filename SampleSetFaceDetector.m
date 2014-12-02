@@ -103,19 +103,25 @@ figure, imshow(I_faces_ref);
 % reference face and the destination image                                %
 %=========================================================================%
 
+% load easy sample images
 easySampleImages = dir('SampleSet\easy\*.jpg');
 numEasySampleImages = length(easySampleImages);
+
 for i=1:1
-    scale = 0.33333;
+    
+    % read i-th easy image
     currentImage = strcat('SampleSet\easy\', easySampleImages(i).name);
     I = imread(currentImage);
+    [imheight, imwidth, ~] = size(I);
+    
+    % establish scale
+    scale = 0.33333;
     I_small = imresize(I, scale);
     
     % detect overall face
     bbox_face = step(faceDetector, I_small);
     
     % detect nose of face
-    %bbox_noses = zeros(size(bbox_face));
     noseDetector = vision.CascadeObjectDetector('Nose');
     for n=1:size(bbox_face,1)
         Icrop = rgb2gray(imcrop(I_small,bbox_face(n,:)));
@@ -123,14 +129,9 @@ for i=1:1
         j = size(bbox_nose,1);
         x_dst(1,1) = (bbox_nose(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_nose(1,3)) / scale;
         y_dst(1,1) = (bbox_nose(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_nose(1,4)) / scale;
-        %for j=1:size(bbox_nose,1)
-        %    bbox_noses(n,:) = bbox_nose(j,:) + [bbox_face(n,1:2)-1 0 0];
-        %end
     end
-    %I_faces = step(shapeInserter, I_faces, int32(bbox_noses)*3);
     
     % detect mouth of face
-    %bbox_mouths = zeros(size(bbox_face));
     mouthDetector = vision.CascadeObjectDetector('Mouth');
     for n=1:size(bbox_face,1)
         Icrop = rgb2gray(imcrop(I_small,bbox_face(n,:)));
@@ -138,14 +139,9 @@ for i=1:1
         j = size(bbox_mouth,1);
         x_dst(2,1) = (bbox_mouth(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_mouth(1,3)) / scale;
         y_dst(2,1) = (bbox_mouth(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_mouth(1,4)) / scale;
-        %for j=1:size(bbox_mouth,1)
-        %    bbox_mouths(n,:) = bbox_mouth(j,:) + [bbox_face(n,1:2)-1 0 0];
-        %end
     end
-    %I_faces = step(shapeInserter, I_faces, int32(bbox_mouths)*3);
     
     % detect right eye of face
-    %bbox_rEyes = zeros(size(bbox_face));
     rEyeDetector = vision.CascadeObjectDetector('RightEye');
     for n=1:size(bbox_face,1)
         Icrop = rgb2gray(imcrop(I_small,bbox_face(n,:)));
@@ -153,14 +149,9 @@ for i=1:1
         j = size(bbox_rEye,1);
         x_dst(3,1) = (bbox_rEye(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_rEye(1,3)) / scale;
         y_dst(3,1) = (bbox_rEye(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_rEye(1,4)) / scale;
-        %for j=1:size(bbox_rEye,1)
-        %    bbox_rEyes(n,:) = bbox_rEye(j,:) + [bbox_face(n,1:2)-1 0 0];
-        %end
     end
-    %I_faces = step(shapeInserter, I_faces, int32(bbox_rEyes)*3);
     
     % detect left eye of face
-    %bbox_lEyes = zeros(size(bbox_face));
     lEyeDetector = vision.CascadeObjectDetector('LeftEye');
     for n=1:size(bbox_face,1)
         Icrop = rgb2gray(imcrop(I_small, bbox_face(n,:)));
@@ -168,15 +159,7 @@ for i=1:1
         j = size(bbox_lEye,1);
         x_dst(4,1) = (bbox_lEye(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_lEye(1,3)) / scale;
         y_dst(4,1) = (bbox_lEye(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_lEye(1,4)) / scale;
-        %for j=1:size(bbox_lEye,1)
-        %    bbox_lEyes(n,:) = bbox_lEye(j,:) + [bbox_face(n,1:2)-1 0 0];
-        %end
     end
-    %I_faces = step(shapeInserter, I_faces, int32(bbox_lEyes)*3);
-    
-    % Compute homography H (exact)
-    % Code for this was borrowed from the Project page.
-    this_H = est_homography(y_dst, x_dst, y_src, x_src);
 
     %{
     %-------DEBUG-------
@@ -187,41 +170,50 @@ for i=1:1
     
     shapeInserter = vision.ShapeInserter('BorderColor', 'Custom');
     I_faces = step(shapeInserter, I, int32(bbox_face)*3);
+    bbox_noses = zeros(size(bbox_face));
+    for j=1:size(bbox_nose,1)
+        bbox_noses(n,:) = bbox_nose(j,:) + [bbox_face(n,1:2)-1 0 0];
+    end
+    shapeInserter = vision.ShapeInserter('BorderColor', 'Custom', 'CustomBorderColor', [0 255 0]);
+    I_faces = step(shapeInserter, I_faces, int32(bbox_noses)*3);
+    bbox_mouths = zeros(size(bbox_face));
+    for j=1:size(bbox_mouth,1)
+        bbox_mouths(n,:) = bbox_mouth(j,:) + [bbox_face(n,1:2)-1 0 0];
+    end
+    shapeInserter = vision.ShapeInserter('BorderColor', 'Custom', 'CustomBorderColor', [255 0 0]);
+    I_faces = step(shapeInserter, I_faces, int32(bbox_mouths)*3);
+    bbox_rEyes = zeros(size(bbox_face));
+    for j=1:size(bbox_rEye,1)
+        bbox_rEyes(n,:) = bbox_rEye(j,:) + [bbox_face(n,1:2)-1 0 0];
+    end
+    shapeInserter = vision.ShapeInserter('BorderColor', 'Custom', 'CustomBorderColor', [0 0 255]);
+    I_faces = step(shapeInserter, I_faces, int32(bbox_rEyes)*3);
+    bbox_lEyes = zeros(size(bbox_face));
+    for j=1:size(bbox_lEye,1)
+        bbox_lEyes(n,:) = bbox_lEye(j,:) + [bbox_face(n,1:2)-1 0 0];
+    end
+    shapeInserter = vision.ShapeInserter('BorderColor', 'Custom', 'CustomBorderColor', [255 0 255]);
+    I_faces = step(shapeInserter, I_faces, int32(bbox_lEyes)*3);
+    
     %-----END DEBUG-----
     %}
     
+    % Compute homography H (exact)
+    % Code for this was borrowed from the Project3 page.
+    this_H = est_homography(x_dst, y_dst, x_src, y_src);
     tform = projective2d(this_H');
    
-    % find extents of panorama
-    ref_face_x = bbox_face_ref(1,1) / ref_scale;
-    ref_face_y = bbox_face_ref(1,2) / ref_scale;
-    ref_face_width = bbox_face_ref(1,3) / ref_scale;
-    ref_face_height = bbox_face_ref(1,4) / ref_scale;
-    [xLimits, yLimits] = outputLimits(tform, [ref_face_x ref_face_width], [ref_face_y ref_face_height]);
-    
-    xmin = min([1; xLimits(:);])
-    xmax = max([size(I,1); xLimits(:)])
-    ymin = min([1; yLimits(:);])
-    ymax = max([size(I,2); yLimits(:);])
-    panorama_width = round(xmax-xmin); panorama_height = round(ymax-ymin);
-    panoramaView = imref2d([panorama_height panorama_width], [xmin xmax], [ymin ymax]);
-        
-    % initialize panoramic mosaic and blender object
-    img_mosaic = im2double(I);%double(zeros(round(ymax-ymin), round(xmax-xmin), 3));
+    % initialize comped image and blender object
+    img_mosaic = double(I)/256.0;
+    panoramaView = imref2d([imheight imwidth], [1 imwidth], [1 imheight]);
     blender = vision.AlphaBlender('Operation', 'Binary mask', 'MaskSource', 'Input port');
     
-    face_ref = im2double(imcrop(I_ref, bbox_face_ref(1,:)/ref_scale));
-    figure, imshow(face_ref);
+    % Overlay the warped reference face image onto the destination
     warpedImage = imwarp(face_ref, tform, 'OutputView', panoramaView);
     warpedMask  = imwarp(ones(size(face_ref(:,:,1))), tform, 'OutputView', panoramaView);
     warpedMask  = warpedMask >= 1;
-        
-    % Overlay the warpedImage onto the panorama
     img_mosaic = step(blender, img_mosaic, warpedImage, warpedMask);
     figure, imshow(img_mosaic);
-    
-    
-    
 end
 
 %{
