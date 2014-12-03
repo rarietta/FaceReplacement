@@ -28,8 +28,8 @@ for n=1:size(bbox_face_ref,1)
     Icrop = rgb2gray(imcrop(I_ref_small,bbox_face_ref(n,:)));
     bbox_nose_ref = step(noseDetector, Icrop);
     j = size(bbox_nose_ref,1);
-    x_src(1,1) = (bbox_nose_ref(1,1) + (bbox_face_ref(n,1)-1) + 0.5*bbox_nose_ref(1,3)) / ref_scale;
-    y_src(1,1) = (bbox_nose_ref(1,2) + (bbox_face_ref(n,2)-1) + 0.5*bbox_nose_ref(1,4)) / ref_scale;
+    x_src(1,1) = (bbox_nose_ref(1,1) + 0.5*bbox_nose_ref(1,3)) / ref_scale;
+    y_src(1,1) = (bbox_nose_ref(1,2) + 0.5*bbox_nose_ref(1,4)) / ref_scale;
 end
 
 % detect mouth of face
@@ -38,8 +38,8 @@ for n=1:size(bbox_face_ref,1)
     Icrop = rgb2gray(imcrop(I_ref_small,bbox_face_ref(n,:)));
     bbox_mouth_ref = step(mouthDetector, Icrop);
     j = size(bbox_mouth_ref,1);
-    x_src(2,1) = (bbox_mouth_ref(j,1) + (bbox_face_ref(n,1)-1) + 0.5*bbox_mouth_ref(j,3)) / ref_scale;
-    y_src(2,1) = (bbox_mouth_ref(j,2) + (bbox_face_ref(n,2)-1) + 0.5*bbox_mouth_ref(j,4)) / ref_scale;
+    x_src(2,1) = (bbox_mouth_ref(j,1) + 0.5*bbox_mouth_ref(j,3)) / ref_scale;
+    y_src(2,1) = (bbox_mouth_ref(j,2) + 0.5*bbox_mouth_ref(j,4)) / ref_scale;
 end
 
 % detect right eye of face
@@ -48,8 +48,8 @@ for n=1:size(bbox_face_ref,1)
     Icrop = rgb2gray(imcrop(I_ref_small,bbox_face_ref(n,:)));
     bbox_rEye_ref = step(rEyeDetector, Icrop);
     j = size(bbox_rEye_ref,1);
-    x_src(3,1) = (bbox_rEye_ref(j,1) + (bbox_face_ref(n,1)-1) + 0.5*bbox_rEye_ref(1,3)) / ref_scale;
-    y_src(3,1) = (bbox_rEye_ref(j,2) + (bbox_face_ref(n,2)-1) + 0.5*bbox_rEye_ref(1,4)) / ref_scale;
+    x_src(3,1) = (bbox_rEye_ref(j,1) + 0.5*bbox_rEye_ref(1,3)) / ref_scale;
+    y_src(3,1) = (bbox_rEye_ref(j,2) + 0.5*bbox_rEye_ref(1,4)) / ref_scale;
 end
 
 % detect left eye of face
@@ -58,8 +58,8 @@ for n=1:size(bbox_face_ref,1)
     Icrop = rgb2gray(imcrop(I_ref_small,bbox_face_ref(n,:)));
     bbox_lEye_ref = step(lEyeDetector, Icrop);
     j = size(bbox_lEye_ref,1);
-    x_src(4,1) = (bbox_lEye_ref(j,1) + (bbox_face_ref(n,1)-1) + 0.5*bbox_lEye_ref(1,3)) / ref_scale;
-    y_src(4,1) = (bbox_lEye_ref(j,2) + (bbox_face_ref(n,2)-1) + 0.5*bbox_lEye_ref(1,4)) / ref_scale;
+    x_src(4,1) = (bbox_lEye_ref(j,1) + 0.5*bbox_lEye_ref(1,3)) / ref_scale;
+    y_src(4,1) = (bbox_lEye_ref(j,2) + 0.5*bbox_lEye_ref(1,4)) / ref_scale;
 end
 
 %{
@@ -118,8 +118,13 @@ for i=1:1
     scale = 0.33333;
     I_small = imresize(I, scale);
     
-    % detect overall face
+    % detect overall face and rescale
     bbox_face = step(faceDetector, I_small);
+    %face_width = bbox_face(1,3);
+    %face_height = bbox_face(1,4);
+    %scale = scale * double(65 / ((face_width + face_height) / 2.0));
+    %I_small = imresize(I, scale);
+    %bbox_face = step(faceDetector, I_small);
     
     % detect nose of face
     noseDetector = vision.CascadeObjectDetector('Nose');
