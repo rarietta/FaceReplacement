@@ -214,11 +214,13 @@ for i=1:1
     blender = vision.AlphaBlender('Operation', 'Binary mask', 'MaskSource', 'Input port');
     
     % Overlay the warped reference face image onto the destination
+    face_ref = im2double(imcrop(I_ref, bbox_face_ref(1,:)/ref_scale));
     warpedImage = imwarp(face_ref, tform, 'OutputView', panoramaView);
     warpedMask  = imwarp(ones(size(face_ref(:,:,1))), tform, 'OutputView', panoramaView);
     warpedMask  = warpedMask >= 1;
     img_mosaic = step(blender, img_mosaic, warpedImage, warpedMask);
     figure, imshow(img_mosaic);
+    imwrite(img_mosaic, 'output_example.bmp');
 end
 
 %{
