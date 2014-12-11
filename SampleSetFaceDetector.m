@@ -107,7 +107,7 @@ figure, imshow(I_faces_ref);
 easySampleImages = dir('SampleSet\easy\*.jpg');
 numEasySampleImages = length(easySampleImages);
 
-for i=1:1
+for i=1:numEasySampleImages
     
     % read i-th easy image
     currentImage = strcat('SampleSet\easy\', easySampleImages(i).name);
@@ -115,11 +115,14 @@ for i=1:1
     [imheight, imwidth, ~] = size(I);
     
     % establish scale
-    scale = 0.33333;
+    scale = 0.5;%1.0;%0.33333;
     I_small = imresize(I, scale);
+    G = fspecial('gaussian', 5, 1.0);
+    I_small = imfilter(I_small, G);
     
     % detect overall face and rescale
     bbox_face = step(faceDetector, I_small);
+    face_size = [bbox_face(1,3) bbox_face(1,4)];
     %face_width = bbox_face(1,3);
     %face_height = bbox_face(1,4);
     %scale = scale * double(65 / ((face_width + face_height) / 2.0));
@@ -127,43 +130,69 @@ for i=1:1
     %bbox_face = step(faceDetector, I_small);
     
     % detect nose of face
-    noseDetector = vision.CascadeObjectDetector('Nose');
+    noseDetector = vision.CascadeObjectDetector('Nose', 'MaxSize', ones(1,2)*ceil(bbox_face(1,3)/2.0), ...
+                                                'ScaleFactor', 1.1, 'MergeThreshold', 10);
     for n=1:size(bbox_face,1)
         Icrop = rgb2gray(imcrop(I_small,bbox_face(n,:)));
         bbox_nose = step(noseDetector, Icrop);
         j = size(bbox_nose,1);
+        fprintf('number of noses = %d\n', j);
         x_dst(1,1) = (bbox_nose(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_nose(1,3)) / scale;
         y_dst(1,1) = (bbox_nose(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_nose(1,4)) / scale;
     end
     
     % detect mouth of face
-    mouthDetector = vision.CascadeObjectDetector('Mouth');
+    mouthDetector = vision.CascadeObjectDetector('Mouth', 'MaxSize', ones(1,2)*ceil(bbox_face(1,3)/2.0), ...
+                                                 'ScaleFactor', 1.1, 'MergeThreshold', 10);
     for n=1:size(bbox_face,1)
         Icrop = rgb2gray(imcrop(I_small,bbox_face(n,:)));
         bbox_mouth = step(mouthDetector, Icrop);
-        j = size(bbox_mouth,1);
-        x_dst(2,1) = (bbox_mouth(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_mouth(1,3)) / scale;
-        y_dst(2,1) = (bbox_mouth(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_mouth(1,4)) / scale;
+        j = size(bbox_mouth,1); lowest_pos = 0; lowest_index = 0;
+        for e=1:j
+            if (bbox_mouth(e,2) + 0.5*bbox_mouth(e,4) > lowest_pos)
+                lowest_pos = bbox_mouth(e,2) + 0.5*bbox_mouth(e,4);
+                lowest_index = e;
+            end
+        end
+        fprintf('number of mouths = %d\n', j);
+        x_dst(2,1) = (bbox_mouth(lowest_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_mouth(lowest_index,3)) / scale;
+        y_dst(2,1) = (bbox_mouth(lowest_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_mouth(lowest_index,4)) / scale;
     end
     
     % detect right eye of face
-    rEyeDetector = vision.CascadeObjectDetector('RightEye');
+    rEyeDetector = vision.CascadeObjectDetector('RightEye', 'MaxSize', ones(1,2)*ceil(bbox_face(1,3)/2.0), ...
+                                                'ScaleFactor', 1.1, 'MergeThreshold', 10);
     for n=1:size(bbox_face,1)
         Icrop = rgb2gray(imcrop(I_small,bbox_face(n,:)));
         bbox_rEye = step(rEyeDetector, Icrop);
-        j = size(bbox_rEye,1);
-        x_dst(3,1) = (bbox_rEye(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_rEye(1,3)) / scale;
-        y_dst(3,1) = (bbox_rEye(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_rEye(1,4)) / scale;
+        j = size(bbox_rEye,1); most_right_pos = 0; most_right_index = 0;
+        for e=1:j
+            if (bbox_rEye(e,1) + 0.5*bbox_rEye(e,3) > most_right_pos)
+                most_right_pos = bbox_rEye(e,1) + 0.5*bbox_rEye(e,3);
+                most_right_index = e;
+            end
+        end
+        fprintf('number of right eyes = %d\n', j);
+        x_dst(3,1) = (bbox_rEye(most_right_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_rEye(most_right_index,3)) / scale;
+        y_dst(3,1) = (bbox_rEye(most_right_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_rEye(most_right_index,4)) / scale;
     end
     
     % detect left eye of face
-    lEyeDetector = vision.CascadeObjectDetector('LeftEye');
+    lEyeDetector = vision.CascadeObjectDetector('LeftEye', 'MaxSize', ones(1,2)*ceil(bbox_face(1,3)/2.0), ...
+                                                'ScaleFactor', 1.1, 'MergeThreshold', 10);
     for n=1:size(bbox_face,1)
         Icrop = rgb2gray(imcrop(I_small, bbox_face(n,:)));
         bbox_lEye = step(lEyeDetector, Icrop);
-        j = size(bbox_lEye,1);
-        x_dst(4,1) = (bbox_lEye(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_lEye(1,3)) / scale;
-        y_dst(4,1) = (bbox_lEye(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_lEye(1,4)) / scale;
+        j = size(bbox_lEye,1); most_left_pos = size(Icrop,2); most_left_index = 0;
+        for e=1:j
+            if (bbox_lEye(e,1) + 0.5*bbox_lEye(e,3) < most_left_pos)
+                most_left_pos = bbox_lEye(e,1) + 0.5*bbox_lEye(e,3);
+                most_left_index = e;
+            end
+        end
+        fprintf('number of left eyes = %d\n', j);
+        x_dst(4,1) = (bbox_lEye(most_left_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_lEye(most_left_index,3)) / scale;
+        y_dst(4,1) = (bbox_lEye(most_left_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_lEye(most_left_index,4)) / scale;
     end
 
     %{
