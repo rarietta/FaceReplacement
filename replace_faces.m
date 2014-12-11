@@ -1,11 +1,16 @@
+function x = replace_faces(dirName)
+
+fprintf('------------------------------------------\n');
+fprintf(strcat('Replacing faces in directory ', dirName, '\n'));
+
 %=========================================================================%
 % Set up source and destination vectors in x and y for est_homography     %
 %=========================================================================%
 
-x_src = zeros(4,1);
-y_src = zeros(4,1);
-x_dst = zeros(4,1);
-y_dst = zeros(4,1);
+x_src = zeros(6,1);
+y_src = zeros(6,1);
+x_dst = zeros(6,1);
+y_dst = zeros(6,1);
 
 %=========================================================================%
 % Process reference image featuring face to use as replacement            %
@@ -62,6 +67,13 @@ for n=1:size(bbox_face_ref,1)
     y_src(4,1) = (bbox_lEye_ref(j,2) + 0.5*bbox_lEye_ref(1,4)) / ref_scale;
 end
 
+Icrop = rgb2gray(imcrop(I_ref_small,bbox_face_ref(n,:)));
+[height, width] = size(Icrop);
+%x_src(5,1) = 0 / ref_scale; y_src(5,1) = 0 / ref_scale;
+x_src(5,1) = 0 / ref_scale; y_src(5,1) = height / ref_scale;
+%x_src(5,1) = width / ref_scale; y_src(5,1) = 0 / ref_scale;
+x_src(6,1) = width / ref_scale; y_src(6,1) = height / ref_scale;
+
 %{
 %-------DEBUG-------
 shapeInserter = vision.ShapeInserter('BorderColor', 'Custom');
@@ -104,13 +116,14 @@ figure, imshow(I_faces_ref);
 %=========================================================================%
 
 % load easy sample images
-easySampleImages = dir('SampleSet\easy\*.jpg');
+%dirName = 'SampleSet\hard\';
+easySampleImages = dir(strcat(dirName, '*.jpg'));
 numEasySampleImages = length(easySampleImages);
 
 for i=1:numEasySampleImages
     
     % read i-th easy image
-    currentImage = strcat('SampleSet\easy\', easySampleImages(i).name);
+    currentImage = strcat(dirName, easySampleImages(i).name);
     fprintf('currentImage = %s\n', currentImage);
     I = imread(currentImage);
     [imheight, imwidth, ~] = size(I);
@@ -126,12 +139,11 @@ for i=1:numEasySampleImages
     if (size(bbox_face,1) == 0)
         continue;
     end
-    face_size = [bbox_face(1,3) bbox_face(1,4)];
     face_width = min(bbox_face(:,3));
     face_height = min(bbox_face(:,4));
     scale = initial_scale * double(140 / ((face_width + face_height) / 2.0));
     I_small = imfilter(imresize(I, scale),G);
-    bbox_face = bbox_face / initial_scale * scale;%step(faceDetector, I_small);
+    bbox_face = bbox_face / initial_scale * scale;
     
     % initialize comped image and blender object
     img_mosaic = double(I)/256.0;
@@ -159,80 +171,89 @@ for i=1:numEasySampleImages
         bbox_nose = step(noseDetector, Icrop);
         j = size(bbox_nose,1);
         if j==0
+            %x_dst(1,1) = bbox_face(1,1); y_dst(1,1) = bbox_face(1,2);
             continue;
+        %end
+        else
+            x_dst(1,1) = (bbox_nose(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_nose(1,3)) / scale;
+            y_dst(1,1) = (bbox_nose(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_nose(1,4)) / scale;
         end
-        x_dst(1,1) = (bbox_nose(1,1) + (bbox_face(n,1)-1) + 0.5*bbox_nose(1,3)) / scale;
-        y_dst(1,1) = (bbox_nose(1,2) + (bbox_face(n,2)-1) + 0.5*bbox_nose(1,4)) / scale;
    
         % detect mouth of face
         bbox_mouth = step(mouthDetector, Icrop);
         j = size(bbox_mouth,1);
         if j==0
+            %x_dst(2,1) = bbox_face(1,1); y_dst(2,1) = bbox_face(1,2);
             continue;
-        end
-        lowest_pos = 0; lowest_index = 0;
-        for e=1:j
-            if (bbox_mouth(e,2) + 0.5*bbox_mouth(e,4) > lowest_pos)
-                lowest_pos = bbox_mouth(e,2) + 0.5*bbox_mouth(e,4);
-                lowest_index = e;
+        %end
+        else
+            lowest_pos = 0; lowest_index = 0;
+            for e=1:j
+                if (bbox_mouth(e,2) + 0.5*bbox_mouth(e,4) > lowest_pos)
+                    lowest_pos = bbox_mouth(e,2) + 0.5*bbox_mouth(e,4);
+                    lowest_index = e;
+                end
             end
+            x_dst(2,1) = (bbox_mouth(lowest_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_mouth(lowest_index,3)) / scale;
+            y_dst(2,1) = (bbox_mouth(lowest_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_mouth(lowest_index,4)) / scale;
         end
-        x_dst(2,1) = (bbox_mouth(lowest_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_mouth(lowest_index,3)) / scale;
-        y_dst(2,1) = (bbox_mouth(lowest_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_mouth(lowest_index,4)) / scale;
     
         % detect right eye of face
         bbox_rEye = step(rEyeDetector, Icrop);
         j = size(bbox_rEye,1); 
         if j==0
+            %x_dst(3,1) = bbox_face(1,1); y_dst(3,1) = bbox_face(1,2);
             continue;
-        end
-        most_right_pos = 0; most_right_index = 0;
-        for e=1:j
-            if (bbox_rEye(e,1) + 0.5*bbox_rEye(e,3) > most_right_pos)
-                most_right_pos = bbox_rEye(e,1) + 0.5*bbox_rEye(e,3);
-                most_right_index = e;
+        %end
+        else
+            most_right_pos = 0; most_right_index = 0;
+            for e=1:j
+                if (bbox_rEye(e,1) + 0.5*bbox_rEye(e,3) > most_right_pos)
+                    most_right_pos = bbox_rEye(e,1) + 0.5*bbox_rEye(e,3);
+                    most_right_index = e;
+                end
             end
+            x_dst(3,1) = (bbox_rEye(most_right_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_rEye(most_right_index,3)) / scale;
+            y_dst(3,1) = (bbox_rEye(most_right_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_rEye(most_right_index,4)) / scale;
         end
-        x_dst(3,1) = (bbox_rEye(most_right_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_rEye(most_right_index,3)) / scale;
-        y_dst(3,1) = (bbox_rEye(most_right_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_rEye(most_right_index,4)) / scale;
     
         % detect left eye of face
         bbox_lEye = step(lEyeDetector, Icrop);
         j = size(bbox_lEye,1); 
         if j==0
+            %x_dst(4,1) = bbox_face(1,1); y_dst(4,1) = bbox_face(1,2);
             continue;
-        end
-        most_left_pos = size(Icrop,2); most_left_index = 0;
-        for e=1:j
-            if (bbox_lEye(e,1) + 0.5*bbox_lEye(e,3) < most_left_pos)
-                most_left_pos = bbox_lEye(e,1) + 0.5*bbox_lEye(e,3);
-                most_left_index = e;
+        %end
+        else
+            most_left_pos = size(Icrop,2); most_left_index = 0;
+            for e=1:j
+                if (bbox_lEye(e,1) + 0.5*bbox_lEye(e,3) < most_left_pos)
+                    most_left_pos = bbox_lEye(e,1) + 0.5*bbox_lEye(e,3);
+                    most_left_index = e;
+                end
             end
+            x_dst(4,1) = (bbox_lEye(most_left_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_lEye(most_left_index,3)) / scale;
+            y_dst(4,1) = (bbox_lEye(most_left_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_lEye(most_left_index,4)) / scale;
         end
-        x_dst(4,1) = (bbox_lEye(most_left_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_lEye(most_left_index,3)) / scale;
-        y_dst(4,1) = (bbox_lEye(most_left_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_lEye(most_left_index,4)) / scale;
     
         % assert right and left eye are different
-        if (abs(x_dst(4,1)-x_dst(3,1)) < (size(Icrop,1)/4.0))
-            continue;
-        end
+        %if (abs(x_dst(4,1)-x_dst(3,1)) < (size(Icrop,1)/4.0))
+        %    continue;
+        %end
         
+        x_dst(5,1) = (bbox_face(n,1)) / scale; y_dst(5,1) = (bbox_face(n,2) + bbox_face(n,4)) / scale;
+        x_dst(6,1) = (bbox_face(n,1) + bbox_face(n,3)) / scale; y_dst(6,1) = (bbox_face(n,2) + bbox_face(n,4)) / scale;
+
         % Compute homography H (exact)
         % Code for this was borrowed from the Project3 page.
         this_H = est_homography(x_dst, y_dst, x_src, y_src);
         tform = projective2d(this_H');
-        [xLimits, yLimits] = outputLimits(tform, [1 2*size(face_ref,2)], [1 2*size(face_ref,1)]);
 
         % Overlay the warped reference face image onto the destination
         face_ref = im2double(imcrop(I_ref, bbox_face_ref(1,:)/ref_scale));
-        %[xLimits, yLimits] = outputLimits(tform, [1 size(face_ref,2)], [1 size(face_ref,1)]);
-        %if (max(xLimits)-min(xLimits) > size(img_mosaic,2) || max(yLimits)-min(yLimits) > size(img_mosaic,1))
-        %    continue
-        %end
         warpedImage = imwarp(face_ref, tform, 'OutputView', panoramaView);
         warpedMask = imcrop(rgb2gray(imread('reference_mask2.png')),bbox_face_ref(1,:)/ref_scale);
         warpedMask = imwarp(warpedMask, tform, 'OutputView', panoramaView) >= 1;
-        %warpedMask = warpedMask >= 1;
         img_mosaic = step(blender, img_mosaic, warpedImage, warpedMask);
     end
     
@@ -240,6 +261,7 @@ for i=1:numEasySampleImages
     imwrite(img_mosaic, 'output_example.bmp');
 end
 
+x = 1;
 %{
 hardSampleImages = dir('SampleSet\hard\*.jpg');
 numHardSampleImages = length(hardSampleImages);
