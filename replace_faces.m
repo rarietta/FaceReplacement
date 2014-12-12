@@ -248,15 +248,55 @@ for i=1:1
         comp_grad_x = target_grad_x;
         comp_grad_y = target_grad_y;
         
-        % Paste source image gradients into masked regions of target gradients.
-        mask_selection_vector = ( blend_mask_im > 0 );
-        comp_grad_x( mask_selection_vector ) = source_grad_x( mask_selection_vector );
-        comp_grad_y( mask_selection_vector ) = source_grad_y( mask_selection_vector );
+        % TEST.
+        foobar = blend_target_im;
+        foobar( floor( minY ):ceil( maxY ), floor( minX ):ceil( maxX ), 1:3 ) = 1;
         
-        Y = poisson_blend( blend_comp_im, comp_grad_x, comp_grad_y, blend_mask_im );
+%         % Paste source image gradients into masked regions of target gradients.
+%         mask_selection_vector = ( blend_mask_im > 0 );
+% %         comp_grad_x( mask_selection_vector ) = source_grad_x( mask_selection_vector );
+% %         comp_grad_y( mask_selection_vector ) = source_grad_y( mask_selection_vector );
+%         
+%         comp_grad_x_r = comp_grad_x( :, :, 1 );
+%         comp_grad_x_g = comp_grad_x( :, :, 2 );
+%         comp_grad_x_b = comp_grad_x( :, :, 3 );
+%         
+%         comp_grad_y_r = comp_grad_y( :, :, 1 );
+%         comp_grad_y_g = comp_grad_y( :, :, 2 );
+%         comp_grad_y_b = comp_grad_y( :, :, 3 );
+%         
+%         source_grad_x_r = source_grad_x( :, :, 1 );
+%         source_grad_x_g = source_grad_x( :, :, 2 );
+%         source_grad_x_b = source_grad_x( :, :, 3 );
+%         
+%         source_grad_y_r = source_grad_y( :, :, 1 );
+%         source_grad_y_g = source_grad_y( :, :, 2 );
+%         source_grad_y_b = source_grad_y( :, :, 3 );
+%         
+%         comp_grad_x_r( mask_selection_vector ) = source_grad_x_r( mask_selection_vector );
+%         comp_grad_x_g( mask_selection_vector ) = source_grad_x_g( mask_selection_vector );
+%         comp_grad_x_b( mask_selection_vector ) = source_grad_x_b( mask_selection_vector );
+%         
+%         comp_grad_y_r( mask_selection_vector ) = source_grad_y_r( mask_selection_vector );
+%         comp_grad_y_g( mask_selection_vector ) = source_grad_y_g( mask_selection_vector );
+%         comp_grad_y_b( mask_selection_vector ) = source_grad_y_b( mask_selection_vector );
+%         
+%         comp_grad_x( :, :, 1 ) = comp_grad_x_r;
+%         comp_grad_x( :, :, 2 ) = comp_grad_x_g;
+%         comp_grad_x( :, :, 3 ) = comp_grad_x_b;
+%         
+%         comp_grad_y( :, :, 1 ) = comp_grad_y_r;
+%         comp_grad_y( :, :, 2 ) = comp_grad_y_g;
+%         comp_grad_y( :, :, 3 ) = comp_grad_y_b;
         
-        figure, imshow( img_mosaic );
-        figure, imshow( Y );
+%         % DEBUG.
+%         figure, imshow( comp_grad_x );
+%         figure, imshow( comp_grad_y );
+        
+%         Y = poisson_blend( blend_comp_im, comp_grad_x, comp_grad_y, blend_mask_im );
+%         
+%         figure, imshow( img_mosaic );
+%         figure, imshow( Y );
         
     end
     

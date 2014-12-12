@@ -28,6 +28,9 @@ else
 
         blend_diff = abs( curr_blend - prev_blend );
         curr_max_diff = max( blend_diff( : ) );
+        
+        % DEBUG.
+        fprintf( '%d %g %g\n', i, curr_max_diff, ( prev_max_diff - curr_max_diff ) / prev_max_diff );
 
         if ( ( prev_max_diff - curr_max_diff ) / prev_max_diff < 0.001 )
             break;
