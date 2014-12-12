@@ -235,6 +235,12 @@ for i=1:1
 %         size( blend_target_im )
 %         size( blend_mask_im )
 %         size( blend_comp_im )
+
+%         % DEBUG.
+%         class( I )
+%         class( warpedImage )
+%         class( warpedMask )
+%         class( img_mosaic )
         
         % Compute horizontal and vertical gradients for target and source images.
         [ target_grad_x, target_grad_y ] = compute_img_gradients( blend_target_im );    % Target image.
@@ -248,13 +254,15 @@ for i=1:1
         comp_grad_x = target_grad_x;
         comp_grad_y = target_grad_y;
         
-        % Paste source image gradients into masked regions of target gradients.
-        mask_selection_vector = ( blend_mask_im > 0 );
-        comp_grad_x( mask_selection_vector ) = source_grad_x( mask_selection_vector );
-        comp_grad_y( mask_selection_vector ) = source_grad_y( mask_selection_vector );
+%         % Paste source image gradients into masked regions of target gradients.
+%         mask_selection_vector = ( blend_mask_im > 0 );
+%         comp_grad_x( mask_selection_vector ) = source_grad_x( mask_selection_vector );
+%         comp_grad_y( mask_selection_vector ) = source_grad_y( mask_selection_vector );
         
-        Y = poisson_blend( blend_comp_im, comp_grad_x, comp_grad_y, blend_mask_im );
+        img_mosaic( floor( minY ):ceil( maxY ), floor( minX ):ceil( maxX ), 1:3 ) = 1;
         
+%         Y = poisson_blend( blend_comp_im, comp_grad_x, comp_grad_y, blend_mask_im );
+%         
         figure, imshow( img_mosaic );
         figure, imshow( Y );
         
