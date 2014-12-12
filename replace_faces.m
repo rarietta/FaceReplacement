@@ -32,7 +32,6 @@ noseDetector = vision.CascadeObjectDetector('Nose');
 for n=1:size(bbox_face_ref,1)
     Icrop = rgb2gray(imcrop(I_ref_small,bbox_face_ref(n,:)));
     bbox_nose_ref = step(noseDetector, Icrop);
-    j = size(bbox_nose_ref,1);
     x_src(1,1) = (bbox_nose_ref(1,1) + 0.5*bbox_nose_ref(1,3)) / ref_scale;
     y_src(1,1) = (bbox_nose_ref(1,2) + 0.5*bbox_nose_ref(1,4)) / ref_scale;
 end
@@ -81,8 +80,8 @@ x_src(6,1) = width / ref_scale; y_src(6,1) = height / ref_scale;
 inputImages = dir(strcat(dirName, '*.jpg'));
 numInputImages = length(inputImages);
 
-% for i=1:numInputImages
-for i=1:1
+for i=1:numInputImages
+%for i=1:1
     
     % read i-th easy image
     currentImage = strcat(dirName, inputImages(i).name);
@@ -241,17 +240,17 @@ for i=1:1
         end
 
         % Perform blend on each channel independently.
+        blended_img = zeros(size(blend_comp_im));
         blended_img( :, :, 1 ) = poisson_blend( blend_comp_im( :, :, 1 ), comp_grad_x( :, :, 1 ), comp_grad_y( :, :, 1 ), blend_mask_im );
         blended_img( :, :, 2 ) = poisson_blend( blend_comp_im( :, :, 2 ), comp_grad_x( :, :, 2 ), comp_grad_y( :, :, 2 ), blend_mask_im );
         blended_img( :, :, 3 ) = poisson_blend( blend_comp_im( :, :, 3 ), comp_grad_x( :, :, 3 ), comp_grad_y( :, :, 3 ), blend_mask_im );
 
         % Set output.
         img_mosaic = blended_img;
-        
     end
     
-    figure, imshow(img_mosaic);
-    imwrite(img_mosaic, 'output_example.bmp');
+    %figure, imshow(img_mosaic);
+    imwrite(img_mosaic, strcat('output/',currentImage));
 end
 
 x = 1;

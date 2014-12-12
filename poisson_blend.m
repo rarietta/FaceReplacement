@@ -22,7 +22,7 @@ else
     curr_blend = img;
     prev_blend = img;
     
-    for i = 1:1024
+    for i = 1:2048
         neighbor_sums = imfilter( curr_blend, neighbor_kernel, 'replicate' );
         curr_blend( mask_selection_vector ) = ( laplacian( mask_selection_vector ) + neighbor_sums( mask_selection_vector ) ) / 4;
 
@@ -32,7 +32,7 @@ else
         % DEBUG.
 %         fprintf( '%d %g %g\n', i, curr_max_diff, ( prev_max_diff - curr_max_diff ) / prev_max_diff );
 
-        if ( ( prev_max_diff - curr_max_diff ) / prev_max_diff < 0.001 )
+        if ( ( prev_max_diff - curr_max_diff ) / prev_max_diff < 1.0e-8 )
             break;
         end
 
