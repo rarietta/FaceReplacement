@@ -205,8 +205,6 @@ for i=1:1
         [xLimits, yLimits] = outputLimits(tform, [1 bbox_face_ref(1,3)/ref_scale], [1 bbox_face_ref(1,4)/ref_scale]);
         minX = min(xLimits(:)); maxX = max(xLimits(:));
         minY = min(yLimits(:)); maxY = max(yLimits(:));
-        mask_aabb_width = maxX - minX;
-        mask_aabb_height = maxY - minY;
         
         % Overlay the warped reference face image onto the destination
         warpedImage = imwarp(face_ref, tform, 'OutputView', panoramaView);
@@ -218,90 +216,42 @@ for i=1:1
         % Perform Poisson image blending                                          %
         %=========================================================================%
         
+        % Rename variables for convenience.
         blend_target_im = im2double( I );
         blend_source_im = warpedImage;
         blend_mask_im = warpedMask;
         blend_comp_im = img_mosaic;
         
-%         % DEBUG.
-%         figure, imshow( I );
-%         figure, imshow( blend_source_im );
-%         figure, imshow( blend_target_im );
-%         figure, imshow( blend_mask_im );
-%         figure, imshow( blend_comp_im );
-        
-%         % DEBUG.
-%         size( blend_source_im )
-%         size( blend_target_im )
-%         size( blend_mask_im )
-%         size( blend_comp_im )
-        
         % Compute horizontal and vertical gradients for target and source images.
         [ target_grad_x, target_grad_y ] = compute_img_gradients( blend_target_im );    % Target image.
         [ source_grad_x, source_grad_y ] = compute_img_gradients( blend_source_im );    % Source image.
         
-%         % TEST.
-%         [ test_grad_x, test_grad_y ] = compute_img_gradients( face_ref );
-%         source_grad_x = imwarp( test_grad_x, tform, 'OutputView', panoramaView );
-%         source_grad_y = imwarp( test_grad_y, tform, 'OutputView', panoramaView );
-        
+        % Copy over target image gradients.
         comp_grad_x = target_grad_x;
         comp_grad_y = target_grad_y;
         
-        % TEST.
-        foobar = blend_target_im;
-        foobar( floor( minY ):ceil( maxY ), floor( minX ):ceil( maxX ), 1:3 ) = 1;
-        
-%         % Paste source image gradients into masked regions of target gradients.
-%         mask_selection_vector = ( blend_mask_im > 0 );
-% %         comp_grad_x( mask_selection_vector ) = source_grad_x( mask_selection_vector );
-% %         comp_grad_y( mask_selection_vector ) = source_grad_y( mask_selection_vector );
-%         
-%         comp_grad_x_r = comp_grad_x( :, :, 1 );
-%         comp_grad_x_g = comp_grad_x( :, :, 2 );
-%         comp_grad_x_b = comp_grad_x( :, :, 3 );
-%         
-%         comp_grad_y_r = comp_grad_y( :, :, 1 );
-%         comp_grad_y_g = comp_grad_y( :, :, 2 );
-%         comp_grad_y_b = comp_grad_y( :, :, 3 );
-%         
-%         source_grad_x_r = source_grad_x( :, :, 1 );
-%         source_grad_x_g = source_grad_x( :, :, 2 );
-%         source_grad_x_b = source_grad_x( :, :, 3 );
-%         
-%         source_grad_y_r = source_grad_y( :, :, 1 );
-%         source_grad_y_g = source_grad_y( :, :, 2 );
-%         source_grad_y_b = source_grad_y( :, :, 3 );
-%         
-%         comp_grad_x_r( mask_selection_vector ) = source_grad_x_r( mask_selection_vector );
-%         comp_grad_x_g( mask_selection_vector ) = source_grad_x_g( mask_selection_vector );
-%         comp_grad_x_b( mask_selection_vector ) = source_grad_x_b( mask_selection_vector );
-%         
-%         comp_grad_y_r( mask_selection_vector ) = source_grad_y_r( mask_selection_vector );
-%         comp_grad_y_g( mask_selection_vector ) = source_grad_y_g( mask_selection_vector );
-%         comp_grad_y_b( mask_selection_vector ) = source_grad_y_b( mask_selection_vector );
-%         
-%         comp_grad_x( :, :, 1 ) = comp_grad_x_r;
-%         comp_grad_x( :, :, 2 ) = comp_grad_x_g;
-%         comp_grad_x( :, :, 3 ) = comp_grad_x_b;
-%         
-%         comp_grad_y( :, :, 1 ) = comp_grad_y_r;
-%         comp_grad_y( :, :, 2 ) = comp_grad_y_g;
-%         comp_grad_y( :, :, 3 ) = comp_grad_y_b;
-        
-%         % DEBUG.
-%         figure, imshow( comp_grad_x );
-%         figure, imshow( comp_grad_y );
-        
-%         Y = poisson_blend( blend_comp_im, comp_grad_x, comp_grad_y, blend_mask_im );
-%         
-%         figure, imshow( img_mosaic );
-%         figure, imshow( Y );
+        % For alpha region, copy over source gradients.
+        for y = floor( minY ):ceil( maxY )
+            for x = floor( minX ):ceil( maxX )
+                if ( blend_mask_im( y, x ) == 1 )
+                    comp_grad_x( y, x, 1:3 ) = source_grad_x( y, x, 1:3 );
+                    comp_grad_y( y, x, 1:3 ) = source_grad_y( y, x, 1:3 );
+                end
+            end
+        end
+
+        % Perform blend on each channel independently.
+        blended_img( :, :, 1 ) = poisson_blend( blend_comp_im( :, :, 1 ), comp_grad_x( :, :, 1 ), comp_grad_y( :, :, 1 ), blend_mask_im );
+        blended_img( :, :, 2 ) = poisson_blend( blend_comp_im( :, :, 2 ), comp_grad_x( :, :, 2 ), comp_grad_y( :, :, 2 ), blend_mask_im );
+        blended_img( :, :, 3 ) = poisson_blend( blend_comp_im( :, :, 3 ), comp_grad_x( :, :, 3 ), comp_grad_y( :, :, 3 ), blend_mask_im );
+
+        % Set output.
+        img_mosaic = blended_img;
         
     end
     
-%     figure, imshow(img_mosaic);
-%     imwrite(img_mosaic, 'output_example.bmp');
+    figure, imshow(img_mosaic);
+    imwrite(img_mosaic, 'output_example.bmp');
 end
 
 x = 1;
