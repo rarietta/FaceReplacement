@@ -202,7 +202,7 @@ for i=1:1
         % DANNY -- USE THIS TO FIND THE CONVEX BOUNDING BOX OF THE
         % TRANSFORMED REFERENCE FACE IN THE SPACE OF THE TARGET IMAGE
         face_ref = im2double(imcrop(I_ref, bbox_face_ref(1,:)/ref_scale));
-        [xLimits, yLimits] = outputLimits(tform, [1 bbox_face_ref(1,3)], [1 bbox_face_ref(1,4)]);
+        [xLimits, yLimits] = outputLimits(tform, [1 bbox_face_ref(1,3)/ref_scale], [1 bbox_face_ref(1,4)/ref_scale]);
         minX = min(xLimits(:)); maxX = max(xLimits(:));
         minY = min(yLimits(:)); maxY = max(yLimits(:));
         mask_aabb_width = maxX - minX;
@@ -250,6 +250,7 @@ for i=1:1
         
         % Paste source image gradients into masked regions of target gradients.
         mask_selection_vector = ( blend_mask_im > 0 );
+        imshow(mask_selection_vector);
         comp_grad_x( mask_selection_vector ) = source_grad_x( mask_selection_vector );
         comp_grad_y( mask_selection_vector ) = source_grad_y( mask_selection_vector );
         
