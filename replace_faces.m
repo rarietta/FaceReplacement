@@ -202,8 +202,8 @@ for i=1:numInputImages
         % TRANSFORMED REFERENCE FACE IN THE SPACE OF THE TARGET IMAGE
         face_ref = im2double(imcrop(I_ref, bbox_face_ref(1,:)/ref_scale));
         [xLimits, yLimits] = outputLimits(tform, [1 bbox_face_ref(1,3)/ref_scale], [1 bbox_face_ref(1,4)/ref_scale]);
-        minX = min(xLimits(:)); maxX = max(xLimits(:));
-        minY = min(yLimits(:)); maxY = max(yLimits(:));
+        minX = max(min(xLimits(:)), 1); maxX = min(max(xLimits(:)), imwidth);
+        minY = max(min(yLimits(:)), 1); maxY = min(max(yLimits(:)), imheight);
         
         % Overlay the warped reference face image onto the destination
         warpedImage = imwarp(face_ref, tform, 'OutputView', panoramaView);
