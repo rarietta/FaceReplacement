@@ -250,7 +250,6 @@ for i=1:1
         
         % Paste source image gradients into masked regions of target gradients.
         mask_selection_vector = ( blend_mask_im > 0 );
-        imshow(mask_selection_vector);
         comp_grad_x( mask_selection_vector ) = source_grad_x( mask_selection_vector );
         comp_grad_y( mask_selection_vector ) = source_grad_y( mask_selection_vector );
         
