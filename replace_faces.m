@@ -1,10 +1,18 @@
 function x = replace_faces(dirName)
 
 fprintf('------------------------------------------\n');
-fprintf(strcat('Replacing faces in directory ', dirName, '\n'));
+fprintf(strcat('Processing reference image\n'));
 
 %=========================================================================%
 % Set up source and destination vectors in x and y for est_homography     %
+%                                                                         %
+% Vector values are organized as follows:                                 %
+% [1] nose position                                                       %
+% [2] mouth position                                                      %
+% [3] right eye position                                                  %
+% [4] left eye position                                                   %
+% [5] lower left corner of face bounding box                              %
+% [6] lower right corner of face bounding box                             %
 %=========================================================================%
 
 x_src = zeros(6,1);
@@ -19,7 +27,7 @@ y_dst = zeros(6,1);
 ref_scale = 0.1;
 
 % detect features in reference image
-I_ref = imread('reference4.jpg');
+I_ref = imread('Ricky.jpg');
 I_ref_small = imresize(I_ref, ref_scale);
 
 % detect overall face
@@ -76,6 +84,8 @@ x_src(6,1) = width / ref_scale; y_src(6,1) = height / ref_scale;
 % reference face and the destination image                                %
 %=========================================================================%
 
+fprintf(strcat('Replacing faces in directory ', dirName, '\n'));
+
 % load images
 inputImages = dir(strcat(dirName, '*.jpg'));
 numInputImages = length(inputImages);
@@ -87,7 +97,6 @@ for i=1:numInputImages
     currentImage = strcat(dirName, inputImages(i).name);
     fprintf('currentImage = %s\n', currentImage);
     I = imread(currentImage);
-%     I = double( imread(currentImage) );
     [imheight, imwidth, ~] = size(I);
     
     % establish scale
@@ -188,7 +197,7 @@ for i=1:numInputImages
             x_dst(4,1) = (bbox_lEye(most_left_index,1) + (bbox_face(n,1)-1) + 0.5*bbox_lEye(most_left_index,3)) / scale;
             y_dst(4,1) = (bbox_lEye(most_left_index,2) + (bbox_face(n,2)-1) + 0.5*bbox_lEye(most_left_index,4)) / scale;
         end
-    
+        
         % add lower bounding box corners of face as additional ctrl pts
         x_dst(5,1) = (bbox_face(n,1)) / scale; y_dst(5,1) = (bbox_face(n,2) + bbox_face(n,4)) / scale;
         x_dst(6,1) = (bbox_face(n,1) + bbox_face(n,3)) / scale; y_dst(6,1) = (bbox_face(n,2) + bbox_face(n,4)) / scale;
@@ -207,7 +216,7 @@ for i=1:numInputImages
         
         % Overlay the warped reference face image onto the destination
         warpedImage = imwarp(face_ref, tform, 'OutputView', panoramaView);
-        warpedMask = imcrop(rgb2gray(imread('reference_mask3.png')),bbox_face_ref(1,:)/ref_scale);
+        warpedMask = imcrop(rgb2gray(imread('Ricky_AlphaMask.png')),bbox_face_ref(1,:)/ref_scale);
         warpedMask = imwarp(warpedMask, tform, 'OutputView', panoramaView) >= 1;
         img_mosaic = step(blender, img_mosaic, warpedImage, warpedMask);
         
