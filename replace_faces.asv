@@ -1,4 +1,4 @@
-function x = replace_faces( dirName, blend_max_iterations, blend_stop_criteria )
+function x = replace_faces(dirName)
 
 fprintf('------------------------------------------\n');
 fprintf(strcat('Processing reference image\n'));
@@ -248,13 +248,13 @@ for i=1:1
             end
         end
 
-        tic;
+        tic
         
         % Perform blend on each channel independently.
         blended_img = zeros(size(blend_comp_im));
-        blended_img( :, :, 1 ) = poisson_blend( blend_comp_im( :, :, 1 ), comp_grad_x( :, :, 1 ), comp_grad_y( :, :, 1 ), blend_mask_im, blend_max_iterations, blend_stop_criteria );
-        blended_img( :, :, 2 ) = poisson_blend( blend_comp_im( :, :, 2 ), comp_grad_x( :, :, 2 ), comp_grad_y( :, :, 2 ), blend_mask_im, blend_max_iterations, blend_stop_criteria );
-        blended_img( :, :, 3 ) = poisson_blend( blend_comp_im( :, :, 3 ), comp_grad_x( :, :, 3 ), comp_grad_y( :, :, 3 ), blend_mask_im, blend_max_iterations, blend_stop_criteria );
+        blended_img( :, :, 1 ) = poisson_blend( blend_comp_im( :, :, 1 ), comp_grad_x( :, :, 1 ), comp_grad_y( :, :, 1 ), blend_mask_im );
+        blended_img( :, :, 2 ) = poisson_blend( blend_comp_im( :, :, 2 ), comp_grad_x( :, :, 2 ), comp_grad_y( :, :, 2 ), blend_mask_im );
+        blended_img( :, :, 3 ) = poisson_blend( blend_comp_im( :, :, 3 ), comp_grad_x( :, :, 3 ), comp_grad_y( :, :, 3 ), blend_mask_im );
         
         toc
         

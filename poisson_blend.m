@@ -1,4 +1,4 @@
-function [ blended_img ] = poisson_blend( img, grad_x, grad_y, mask )
+function [ blended_img ] = poisson_blend( img, grad_x, grad_y, mask, blend_max_iterations, blend_stop_criteria )
 %POISSON_BLEND Blend image using method described in "Poisson Image Editing" [Perez et all. 2003].
 %              Uses the Jacobi Method to solve a sparse linear system.
 %              Implementation inspired by Chris Tralie: http://www.ctralie.com/Teaching/PoissonImageEditing/
@@ -7,11 +7,13 @@ function [ blended_img ] = poisson_blend( img, grad_x, grad_y, mask )
 %               grad_x, horizontal gradient.
 %               grad_y, vertical gradient.
 %               mask, defines region to blend.
+%               blend_max_iterations, max number of iterations to solve linear system.
+%               blend_stop_criterea, stopping criteria when blending.
 %   Returns: blended_img, blended result.
 
 % Check for invalid number of arguments.
-if nargin ~= 4
-    error( 'poisson_blend requires exactly 4 arguments.' );
+if nargin ~= 6
+    error( 'poisson_blend requires exactly 6 arguments.' );
 else
     % Kernel to identify four orthogonal neighbors per pixel.
     neighbor_kernel = [ 0, 1, 0; 1, 0, 1; 0, 1, 0 ];
@@ -22,7 +24,7 @@ else
     curr_blend = img;
     prev_blend = img;
     
-    for i = 1:2048
+    for i = 1:blend_max_iterations
         neighbor_sums = imfilter( curr_blend, neighbor_kernel, 'replicate' );
         curr_blend( mask_selection_vector ) = ( laplacian( mask_selection_vector ) + neighbor_sums( mask_selection_vector ) ) / 4;
 
@@ -32,7 +34,7 @@ else
         % DEBUG.
 %         fprintf( '%d %g %g\n', i, curr_max_diff, ( prev_max_diff - curr_max_diff ) / prev_max_diff );
 
-        if ( ( prev_max_diff - curr_max_diff ) / prev_max_diff < 1.0e-8 )
+        if ( ( prev_max_diff - curr_max_diff ) / prev_max_diff < blend_stop_criteria )
             break;
         end
 

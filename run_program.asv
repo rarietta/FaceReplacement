@@ -9,4 +9,4 @@ replace_faces( 'SampleSet/easy/', blend_max_iterations, blend_stop_criteria );
 
 %replace_faces( 'TestSet/blending/', blend_max_iterations, blend_stop_criteria );
 %replace_faces( 'TestSet/pose/', blend_max_iterations, blend_stop_criteria );
-%replace_faces( 'TestSet/more/', blend_max_iterations, blend_stop_criteria );
+%replace_faces( 'TestSet/more/', blend_max_iterations );
